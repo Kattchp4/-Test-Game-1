@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Game Survey</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #141e30, #243b55);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.1);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      text-align: center;
+      width: 360px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    h2, h3 {
+      margin: 10px 0;
+    }
+
+    .user-info {
+      text-align: left;
+      background: rgba(255,255,255,0.05);
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      resize: none;
+      height: 80px;
+    }
+
+    button {
+      padding: 12px;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(90deg, #ff7e5f, #feb47b);
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h2 id="welcome">กำลังโหลด...</h2>
+
+  <div class="user-info" id="userInfo">
+    กำลังโหลดข้อมูลผู้เล่น...
+  </div>
+
+  <h3>🎯 แบบประเมินเกม</h3>
+
+  <select id="fun">
+    <option value="">-- ความสนุก --</option>
+    <option>สนุกมาก</option>
+    <option>สนุก</option>
+    <option>เฉยๆ</option>
+    <option>ไม่สนุก</option>
+  </select>
+
+  <select id="difficulty">
+    <option value="">-- ความยาก --</option>
+    <option>ง่าย</option>
+    <option>พอดี</option>
+    <option>ยาก</option>
+  </select>
+
+  <textarea id="comment" placeholder="ความคิดเห็นเพิ่มเติม..."></textarea>
+
+  <button onclick="submitSurvey()">ส่งคำตอบ</button>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDnwbSaQxDMx9H6ejQk8T-30lKg9xDvHxc",
+  projectId: "database-25e52"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔥 ดึง userId
+const userId = localStorage.getItem("userId");
+
+// 🔥 โหลด user
+async function loadUser() {
+  if (!userId) {
+    document.getElementById("welcome").innerText = "ไม่พบผู้ใช้";
+    return;
+  }
+
+  const docRef = doc(db, "players", userId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const data = docSnap.data();
+
+    document.getElementById("welcome").innerText = "👋 สวัสดี " + data.name;
+
+    // แสดงข้อมูล user ทั้งหมด
+    document.getElementById("userInfo").innerHTML = `
+      <strong>ชื่อ:</strong> ${data.name}<br>
+      <strong>อายุ:</strong> ${data.age}<br>
+      <strong>เพศ:</strong> ${data.gender}<br>
+      <strong>มหาวิทยาลัย:</strong> ${data.university}<br>
+      <strong>คณะ:</strong> ${data.faculty}<br>
+    `;
+
+  } else {
+    document.getElementById("welcome").innerText = "ไม่พบข้อมูลผู้ใช้";
+    document.getElementById("userInfo").innerText = "";
+  }
+}
+
+loadUser();
+
+// 🔴 submit survey
+window.submitSurvey = async function() {
+
+  const fun = document.getElementById("fun").value;
+  const difficulty = document.getElementById("difficulty").value;
+  const comment = document.getElementById("comment").value;
+
+  if (!fun || !difficulty) {
+    alert("กรุณาเลือกให้ครบ");
+    return;
+  }
+
+  await updateDoc(doc(db, "players", userId), {
+    fun: fun,
+    difficulty: difficulty,
+    comment: comment
+  });
+
+  alert("🎉 ขอบคุณที่เล่นเกม!");
+
+  // 🔥 กลับไป Genially
+  window.location.href = "https://app.genially.com/editor/69bf95cbcc8ed35046eee9b0";
+}
+</script>
+
+</body>
+</html>
